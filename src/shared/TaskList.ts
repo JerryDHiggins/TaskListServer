@@ -12,6 +12,9 @@ export class TaskList {
     if(!taskList.hasOwnProperty('name')) return false;
     if(!taskList.hasOwnProperty('id')) return false; 
     if(!taskList.hasOwnProperty('tasks')) return false;
+
+    // roll through and validate tasks
+    
     return true;
   }
 }
