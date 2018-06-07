@@ -5,40 +5,46 @@ var UUID = require('uuid-js');
 // todo: no reason to convert results from string to an array  below... extra step. 
 // as little transformation as possible for performance.
 
+// todo: what to do with errors from the database
+
 export class DataStore {
     dbConnectionStr:string = 'mongodb://localhost:27017/ToDo';
 
-    getTaskLists(searchString: string, skip: number, limit: number): Promise<string> {
+    getTaskLists(searchString: string, skip: number, limit: number): Promise<Array<TaskList>> {
         let MongoClient = require('mongodb').MongoClient;
         let resultStr: string;
         
-        return new Promise<string>((resolve, reject) => {
+        return new Promise<Array<TaskList>>((resolve, reject) => {
             MongoClient.connect(this.dbConnectionStr, function (err, client) {
                 if (err) throw err;
                 let db = client.db('ToDo')
-                if(!searchString) { searchString=null;}
-                if(!limit) { limit=null; }
-                if(!skip) { skip=null; }
+                if(!limit) { limit=20000000; }
+                if(!skip) { skip=0; }
 
-              db.collection('TaskLists').createIndex({
-                    name: "text"
+                db.collection('TaskLists').createIndex({
+                    name: "text",
                 });
-
-                db.collection('TaskLists')
-                    .find({"$text": {"$search": searchString}}).toArray(function (err, result) {
-
-                    if (err) throw err
-                    resultStr = JSON.stringify(result);
-                    resolve(resultStr);
-                })
+                
+                if (searchString) {
+                    db.collection('TaskLists').find({"$text": {"$search": searchString }}).limit(limit).skip(skip).toArray(function (err, result) {
+                        if (err) throw err
+                        resolve(result);
+                    });
+                } else {
+                    db.collection('TaskLists').find().limit(limit).skip(skip).toArray(function (err, result) {
+                        if (err) throw err
+                        resolve(result);                   
+                    });
+                }
             });
         });
     }
-    getTaskListById(taskListId: string): Promise<string> {
+
+    getTaskListById(taskListId: string): Promise<Array<TaskList>> {
         let MongoClient = require('mongodb').MongoClient;
         let resultStr: string;
         
-        return new Promise<string>((resolve, reject) => {
+        return new Promise<Array<TaskList>>((resolve, reject) => {
             MongoClient.connect(this.dbConnectionStr, function (err, client) {
                 if (err) throw err;
     
@@ -46,13 +52,41 @@ export class DataStore {
                 
                 db.collection('TaskLists').find({'id': taskListId}).toArray(function (err, result) {
                     if (err) throw err
-                    resultStr = JSON.stringify(result);
-                    resolve(resultStr);
+                    resolve(result);
                 })
             });
         });
     }
-    createTaskLists() : string {
+
+    createTaskList(taskList: TaskList) : Promise<string> {
+        let MongoClient = require('mongodb').MongoClient;
+        let resultStr: string;
+        
+        return new Promise<string>((resolve, reject) => {
+            MongoClient.connect(this.dbConnectionStr, function (err, client) {
+                if (err) throw err;
+                let db = client.db('ToDo');
+                let str = taskList.id;
+                let ds: DataStore  = new DataStore();
+                ds.getTaskListById(taskList.id).then( tlists => {
+                //     if(tlists.length == 0) { // no duplicate found
+                //         // db.collection('TaskList').insert(taskList);
+                //         resolve('success');
+                //     }
+                //     reject('duplicate list found for id: ' + taskList.id);
+                    let len: number = tlists.length;
+                    if(tlists.length === 0) {
+                        db.collection('TaskLists').insert(taskList);
+                        resolve('success');
+                    } else {
+                        reject('duplicate exists with id: '+taskList.id);
+                    }
+                });
+             });
+        });
+    }
+
+    createTaskLists() : string {        // utility for creating records...
         let tlists: Array<TaskList> = new Array<TaskList>();
         let t: Task;
         let tl: TaskList;

@@ -7,4 +7,11 @@ export class TaskList {
   constructor() {
     this.tasks = new Array<Task>();
   }
+  static validate(taskList: TaskList) : boolean {
+    // bonehead validation, should be a library for structural comparison
+    if(!taskList.hasOwnProperty('name')) return false;
+    if(!taskList.hasOwnProperty('id')) return false; 
+    if(!taskList.hasOwnProperty('tasks')) return false;
+    return true;
+  }
 }
