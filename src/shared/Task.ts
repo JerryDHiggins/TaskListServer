@@ -1,3 +1,4 @@
+import { isv4UUID } from './util';
 
 export class Task {
     id: string; // uuid
@@ -7,7 +8,10 @@ export class Task {
       if(!task.hasOwnProperty('name')) return false;
       if(!task.hasOwnProperty('id')) return false; 
       if(!task.hasOwnProperty('completed')) return false;
-      
-      return true;
+      if(!isv4UUID.test(task.id)) {
+        return false;
+      } else {
+        return true;
+      }
     }
   }

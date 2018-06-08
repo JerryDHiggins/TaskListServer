@@ -1,15 +1,12 @@
 import { TaskList } from '../shared/TaskList';
 import { Task } from '../shared/Task';
+import { isIntString, isv4UUID } from '../shared/util';
+
 var UUID = require('uuid-js');
 
 let MONGO_LOCAL_URI: string = 'mongodb://localhost:27017/todolist';
 
 let dbname: string = 'todolist';
-
-// todo: no reason to convert results from string to an array  below... extra step. 
-// as little transformation as possible for performance.
-
-// todo: what to do with errors from the database
 
 export class DataStore {
     dbConnectionStr: string = MONGO_LOCAL_URI;

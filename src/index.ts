@@ -4,12 +4,11 @@ import * as express from 'express'
 import { Task } from './shared/Task';
 import { TaskList } from './shared/TaskList';
 import {DataStore} from './db/datalayer';
-import { deepStrictEqual } from 'assert';
+import { isIntString, isv4UUID} from './shared/util';
 
-const app = express()
-const port = 4001
-const isIntString: RegExp = new RegExp('^[0-9]+$');
-const isv4UUID: RegExp = new RegExp('^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
+const app = express();
+var port = 401;
+
 
 app.use(express.json());
 

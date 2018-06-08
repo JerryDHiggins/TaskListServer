@@ -1,4 +1,5 @@
 import { Task } from '../shared/Task';
+import { isv4UUID } from './util';
 
 export class TaskList {
   id: string;   // uuid
@@ -12,9 +13,16 @@ export class TaskList {
     if(!taskList.hasOwnProperty('name')) return false;
     if(!taskList.hasOwnProperty('id')) return false; 
     if(!taskList.hasOwnProperty('tasks')) return false;
+    if(!isv4UUID.test(taskList.id)) return false;
 
-    // roll through and validate tasks
+    if(!isv4UUID.test(taskList.id)) return false;
     
+    for(let i: number = 0; i < taskList.tasks.length; i++) {
+      if(!Task.validate(taskList.tasks[i])) {
+        return false;
+      }
+    }
+
     return true;
   }
 }
