@@ -1,19 +1,24 @@
 
 // src/index.ts
+// TODO: Add express-validator functions to routes with input of any kind
 import * as express from 'express'
 import { Task } from './shared/Task';
 import { TaskList } from './shared/TaskList';
 import {DataStore} from './db/datalayer';
 import { isIntString, isv4UUID} from './shared/util';
+import validator = require('express-validator');
 
 const app = express();
 var port = 401;
 let ds: DataStore = new DataStore();
 ds.connectDb().then(message => {
     console.log(message);
+}).catch(err => {
+    console.log(err);
 });
 
 app.use(express.json());
+app.use(validator());
 
 app.get('/', (request, response, next) => {
     let resp: string = 'TaskList server is running';

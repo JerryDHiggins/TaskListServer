@@ -36,23 +36,16 @@ export class DataStore {
     }
     
     getTaskLists(searchString: string, skip: number, limit: number): Promise<Array<TaskList>> {
-        let resultStr: string;
-        
         return new Promise<Array<TaskList>>((resolve, reject) => {
-                if (isDbAttached) {
-                    if(!limit) { limit=20000000; }
+                if ((isDbAttached) && (db.serverConfig.isConnected())) {
+                    if(!limit) { limit=20000000; }  // TODO: Magic, should do something better
                     if(!skip) { skip=0; }
 
                     // Note that the createIndex will only create a new index if it does not already exist
-                    try{
-                        db.collection('TaskLists').createIndex({
-                            name: "text",
-                        });
-                    }
-                    catch(err) {
-                        reject(err);
-                    }
-                
+                    db.collection('TaskLists').createIndex({
+                        name: "text",
+                    });
+            
                     if (searchString) {
                         db.collection('TaskLists').find({"$text": {"$search": searchString }}).limit(limit).skip(skip).toArray(function (err, result) {
                             if (!err) {
@@ -60,7 +53,10 @@ export class DataStore {
                                 } else {
                                     reject(err);
                                 }
-                        });
+                        })
+                        // .catch(err => {
+                        //     reject(err);
+                        // });
                     } else {
                         db.collection('TaskLists').find().limit(limit).skip(skip).toArray(function (err, result) {
                             if (!err) {
@@ -68,7 +64,7 @@ export class DataStore {
                                 } else {
                                     reject(err);
                                 }               
-                        });
+                        })
                     }
                 } else {
                     reject(dbMessage.errnoconn);
@@ -82,7 +78,7 @@ export class DataStore {
         
         return new Promise<Array<TaskList>>((resolve, reject) => {
                 let err=null;
-                if (isDbAttached) {
+                if ((isDbAttached) && (db.serverConfig.isConnected())) {
                     db.collection('TaskLists').find({'id': taskListId}).toArray(function (err, result) {
                         if (!err) {
                             resolve(result);
@@ -101,22 +97,20 @@ export class DataStore {
         let resultStr: string;
         
         return new Promise<string>((resolve, reject) => {
-                if (isDbAttached)  {
-                    let str = taskList.id;
-                    let ds: DataStore  = new DataStore();
-                    ds.getTaskListById(taskList.id)
-                        .then( tlists => {
-                            let len: number = tlists.length;
-                            if(tlists.length === 0) {
-                                db.collection('TaskLists').insert(taskList);
-                                resolve('success');
-                            } else {
-                                reject('aborting as duplicate list exists with id: '+taskList.id);
-                            }
-                    })
-                } else {
-                    reject(dbMessage.errnoconn);
-                }
+            if ((isDbAttached) && (db.serverConfig.isConnected())) {
+                this.getTaskListById(taskList.id)
+                    .then( tlists => {
+                        let len: number = tlists.length;
+                        if(tlists.length === 0) {
+                            db.collection('TaskLists').insert(taskList);
+                            resolve('success');
+                        } else {
+                            reject('aborting as duplicate list exists with id: '+taskList.id);
+                        }
+                });
+            } else {
+                reject(dbMessage.errnoconn);
+            }
         });
     }
 
@@ -125,31 +119,30 @@ export class DataStore {
         let resultStr: string;
         
         return new Promise<string>((resolve, reject) => {
-                if (isDbAttached)  {
-  //                    let ds: DataStore  = new DataStore();
-                    this.getTaskListById(listId)
-                        .then( tlists => {
-                            let len: number = tlists.length;
-                            if(tlists.length === 0) {
-                                reject('List ' + listId + ' not found');
-                            } else {
-                                let isDuplicate: boolean = false;
-                                for(let i: number = 0; i < tlists[0].tasks.length; i++) {
-                                    if(task.id === tlists[0].tasks[i].id) {
-                                        isDuplicate = true;
-                                    }
-                                }
-                                if (isDuplicate) {
-                                    reject('aborted, duplicate task exists for id: '+task.id);
-                                } else {
-                                    db.collection('TaskLists').updateOne({'id': listId}, {$push: {'tasks': task}});
-                                    resolve('success');
+            if ((isDbAttached) && (db.serverConfig.isConnected())) {
+                this.getTaskListById(listId)
+                    .then( tlists => {
+                        let len: number = tlists.length;
+                        if(tlists.length === 0) {
+                            reject('List ' + listId + ' not found');
+                        } else {
+                            let isDuplicate: boolean = false;
+                            for(let i: number = 0; i < tlists[0].tasks.length; i++) {
+                                if(task.id === tlists[0].tasks[i].id) {
+                                    isDuplicate = true;
                                 }
                             }
-                    })
-                } else {
-                    reject(dbMessage.errnoconn);
-                }
+                            if (isDuplicate) {
+                                reject('aborted, duplicate task exists for id: '+task.id);
+                            } else {
+                                db.collection('TaskLists').updateOne({'id': listId}, {$push: {'tasks': task}});
+                                resolve('success');
+                            }
+                        }
+                })
+            } else {
+                reject(dbMessage.errnoconn);
+            }
         });
     }
     markTaskCompleted(listId: string, taskId: string) : Promise<string> {
