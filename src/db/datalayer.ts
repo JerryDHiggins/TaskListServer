@@ -7,51 +7,72 @@ var UUID = require('uuid-js');
 let MONGO_LOCAL_URI: string = 'mongodb://localhost:27017/todolist';
 
 let dbname: string = 'todolist';
+let db;
+let isDbAttached = false;
+class dbMessage {
+    static errcantconn: string = 'unable to connect to database';
+    static errnoconn: string = 'database not connected';
+    static conn: string = 'database connected';
+};
 
 export class DataStore {
     dbConnectionStr: string = MONGO_LOCAL_URI;
-
-    getTaskLists(searchString: string, skip: number, limit: number): Promise<Array<TaskList>> {
+   
+    connectDb(): Promise<string> {
         let MongoClient = require('mongodb').MongoClient;
+        return new Promise<string>((resolve, reject) => {
+            MongoClient.connect(this.dbConnectionStr, function (err, client) {
+                if (!err) {
+                    db = client.db(dbname);
+                    if(err) {
+                        reject(dbMessage.errcantconn);
+                     } else {
+                        isDbAttached = true;
+                        resolve(dbMessage.conn);
+                     }
+                }
+               });
+        });
+    }
+    
+    getTaskLists(searchString: string, skip: number, limit: number): Promise<Array<TaskList>> {
         let resultStr: string;
         
         return new Promise<Array<TaskList>>((resolve, reject) => {
-            MongoClient.connect(this.dbConnectionStr, function (err, client) {
-                if (!err) {
-                    let db = client.db(dbname);
-                    if (!err) {
-                        if(!limit) { limit=20000000; }
-                        if(!skip) { skip=0; }
+                if (isDbAttached) {
+                    if(!limit) { limit=20000000; }
+                    if(!skip) { skip=0; }
 
-                        // Note that the createIndex will only create a new index if it does not already exist
+                    // Note that the createIndex will only create a new index if it does not already exist
+                    try{
                         db.collection('TaskLists').createIndex({
                             name: "text",
-                        })
-                 
-                        if (searchString) {
-                            db.collection('TaskLists').find({"$text": {"$search": searchString }}).limit(limit).skip(skip).toArray(function (err, result) {
-                                if (!err) {
-                                    resolve(result);
-                                 } else {
-                                     reject(err);
-                                 }
-                            });
-                        } else {
-                            db.collection('TaskLists').find().limit(limit).skip(skip).toArray(function (err, result) {
-                                if (!err) {
-                                    resolve(result);
-                                 } else {
-                                     reject(err);
-                                 }               
-                            });
-                        }
-                    } else {
+                        });
+                    }
+                    catch(err) {
                         reject(err);
                     }
+                
+                    if (searchString) {
+                        db.collection('TaskLists').find({"$text": {"$search": searchString }}).limit(limit).skip(skip).toArray(function (err, result) {
+                            if (!err) {
+                                    resolve(result);
+                                } else {
+                                    reject(err);
+                                }
+                        });
+                    } else {
+                        db.collection('TaskLists').find().limit(limit).skip(skip).toArray(function (err, result) {
+                            if (!err) {
+                                    resolve(result);
+                                } else {
+                                    reject(err);
+                                }               
+                        });
+                    }
                 } else {
-                    reject(err);
+                    reject(dbMessage.errnoconn);
                 }
-            })
         });
     }
 
@@ -60,9 +81,8 @@ export class DataStore {
         let resultStr: string;
         
         return new Promise<Array<TaskList>>((resolve, reject) => {
-            MongoClient.connect(this.dbConnectionStr, function (err, client) {
-                if (!err) {
-                    let db = client.db(dbname);
+                let err=null;
+                if (isDbAttached) {
                     db.collection('TaskLists').find({'id': taskListId}).toArray(function (err, result) {
                         if (!err) {
                             resolve(result);
@@ -71,10 +91,9 @@ export class DataStore {
                         }
                     })
                 } else {
-                    reject(err);
+                    reject(dbMessage.errnoconn);
                 }
             });
-        });
     }
 
     createTaskList(taskList: TaskList) : Promise<string> {
@@ -82,9 +101,7 @@ export class DataStore {
         let resultStr: string;
         
         return new Promise<string>((resolve, reject) => {
-            MongoClient.connect(this.dbConnectionStr, function (err, client) {
-                if (!err)  {
-                    let db = client.db(dbname);
+                if (isDbAttached)  {
                     let str = taskList.id;
                     let ds: DataStore  = new DataStore();
                     ds.getTaskListById(taskList.id)
@@ -98,9 +115,8 @@ export class DataStore {
                             }
                     })
                 } else {
-                    reject(err);
+                    reject(dbMessage.errnoconn);
                 }
-             });
         });
     }
 
@@ -109,11 +125,9 @@ export class DataStore {
         let resultStr: string;
         
         return new Promise<string>((resolve, reject) => {
-            MongoClient.connect(this.dbConnectionStr, function (err, client) {
-                if (!err)  {
-                    let db = client.db(dbname);
-                    let ds: DataStore  = new DataStore();
-                    ds.getTaskListById(listId)
+                if (isDbAttached)  {
+  //                    let ds: DataStore  = new DataStore();
+                    this.getTaskListById(listId)
                         .then( tlists => {
                             let len: number = tlists.length;
                             if(tlists.length === 0) {
@@ -134,19 +148,15 @@ export class DataStore {
                             }
                     })
                 } else {
-                    reject(err);
+                    reject(dbMessage.errnoconn);
                 }
-             });
         });
     }
     markTaskCompleted(listId: string, taskId: string) : Promise<string> {
         let MongoClient = require('mongodb').MongoClient;
         return new Promise<string>((resolve, reject) => {
-            MongoClient.connect(this.dbConnectionStr, function (err, client) {
-                if (!err)  {
-                    let db = client.db(dbname);
-                    let ds: DataStore  = new DataStore();
-                    ds.getTaskListById(listId)
+                if (isDbAttached)  {
+                    this.getTaskListById(listId)
                         .then( tlists => {
                             let len: number = tlists.length;
                             if(tlists.length === 0) {
@@ -170,9 +180,8 @@ export class DataStore {
                             }
                     })
                 } else {
-                    reject(err);
+                    reject(dbMessage.errnoconn);
                 }
-             });
         });
     }
 

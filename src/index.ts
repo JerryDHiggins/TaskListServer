@@ -8,17 +8,21 @@ import { isIntString, isv4UUID} from './shared/util';
 
 const app = express();
 var port = 401;
-
+let ds: DataStore = new DataStore();
+ds.connectDb().then(message => {
+    console.log(message);
+});
 
 app.use(express.json());
 
 app.get('/', (request, response, next) => {
-    const resp: string = 'Task List Server Is Running: route: /';
-    response.json(resp);
+    let resp: string = 'TaskList server is running';
+    response.status(200);
+    response.send(resp);
 });
 
+
 app.get('/api/lists/', (request, response) => {
-    // if(id && string.match(/^[0-9]+$/) != null)
     let skip: number;
     let limit: number;
     let queryString: string = request.query.q;
@@ -57,7 +61,7 @@ app.get('/api/lists/', (request, response) => {
             })
             .catch(err => {
                 response.status(400);
-                response.json(err.message);
+                response.json(err);
                 response.send();
             });
     }
@@ -76,9 +80,9 @@ app.post('/api/lists/', (request, response) => {
             response.json('item created');
             response.send();
         })
-        .catch(message => {
+        .catch(err => {
             response.status(409);
-            response.json(message);
+            response.json(err);
             response.send();
         });
     }
@@ -91,7 +95,7 @@ app.get('/api/list/:listId', (request, response) => {
         response.status(400);
         response.send();
     }
-    let ds: DataStore = new DataStore();
+    // let ds: DataStore = new DataStore();
     ds.getTaskListById(listId)
         .then(tlists => {
             if(tlists.length == 0) {
