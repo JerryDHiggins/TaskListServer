@@ -1,5 +1,5 @@
-import { Task } from '../shared/Task';
-import { isv4UUID } from './util';
+import { Task } from "../shared/Task";
+import { isv4UUID } from "./util";
 
 export class TaskList {
   id: string;   // uuid
@@ -20,25 +20,22 @@ export class TaskList {
 }
 // Define Task JSON Schema
 export const TaskListSchema = {
-  type: 'object',
-  required: ['id', 'name'],
-  properties: {
-      id: {
-          type: 'string'
-      },
-      name: {
-          type: 'string'
-      },
-      type: 'array',
-      tasks: [{
-          type: 'string'
-        },
-        {
-          type: 'string'
-        },
-        {
-          type: 'boolean'
+  "type": "object",
+  "required": ["id", "name"],
+  "properties": {
+      "id": {"type": "string"},
+      "name": {"type": "string"},
+      "tasks" : {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["id", "name", "completed"],
+          "properties": {
+            "id": {"type" : "string"},
+            "name": {"type" : "string"},
+            "completed": {"type" : "boolean"}
+          }
         }
-      ]
+      },
   }
 }

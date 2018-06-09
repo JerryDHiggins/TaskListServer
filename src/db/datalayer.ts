@@ -2,7 +2,6 @@ import { TaskList } from '../shared/TaskList';
 import { Task } from '../shared/Task';
 import { isIntString, isv4UUID } from '../shared/util';
 
-
 var UUID = require('uuid-js');
 
 let MONGO_LOCAL_URI: string = 'mongodb://localhost:27017/todolist';
@@ -10,10 +9,12 @@ let MONGO_LOCAL_URI: string = 'mongodb://localhost:27017/todolist';
 let dbname: string = 'todolist';
 let db;
 let isDbAttached = false;
-class dbMessage {
+export class dataLayerMessage {
     static errcantconn: string = 'unable to connect to database';
     static errnoconn: string = 'database not connected';
     static conn: string = 'database connected';
+    static duplist: string = 'aborting as duplicate list exists with this id:';
+    static duptask: string = 'aborting as duplicate task exists with this id:';
 };
 
 export class DataStore {
@@ -26,13 +27,13 @@ export class DataStore {
                 if (!err) {
                     db = client.db(dbname);
                     if(err) {
-                        reject(dbMessage.errcantconn);
+                        reject(dataLayerMessage.errcantconn);
                      } else {
                         isDbAttached = true;
-                        resolve(dbMessage.conn);
+                        resolve(dataLayerMessage.conn);
                      }
                 } else {
-                    reject(dbMessage.errcantconn);
+                    reject(dataLayerMessage.errcantconn);
                 }
             });
         });
@@ -68,7 +69,8 @@ export class DataStore {
                         })
                     }
                 } else {
-                    reject(dbMessage.errnoconn);
+                    this.connectDb();   // try to re-connect to the database
+                    reject(dataLayerMessage.errnoconn);
                 }
         });
     }
@@ -88,7 +90,8 @@ export class DataStore {
                         }
                     })
                 } else {
-                    reject(dbMessage.errnoconn);
+                    this.connectDb();   // try to re-connect to the database
+                    reject(dataLayerMessage.errnoconn);
                 }
             });
     }
@@ -106,11 +109,12 @@ export class DataStore {
                             db.collection('TaskLists').insert(taskList);
                             resolve('success');
                         } else {
-                            reject('aborting as duplicate list exists with id: '+taskList.id);
+                            reject(dataLayerMessage.duplist);
                         }
                 });
             } else {
-                reject(dbMessage.errnoconn);
+                this.connectDb();   // try to re-connect to the database
+                reject(dataLayerMessage.errnoconn);
             }
         });
     }
@@ -134,7 +138,7 @@ export class DataStore {
                                 }
                             }
                             if (isDuplicate) {
-                                reject('aborted, duplicate task exists for id: '+task.id);
+                                reject(dataLayerMessage.duptask);
                             } else {
                                 db.collection('TaskLists').updateOne({'id': listId}, {$push: {'tasks': task}});
                                 resolve('success');
@@ -142,7 +146,8 @@ export class DataStore {
                         }
                 })
             } else {
-                reject(dbMessage.errnoconn);
+                this.connectDb();   // try to re-connect to the database
+                reject(dataLayerMessage.errnoconn);
             }
         });
     }
@@ -174,7 +179,8 @@ export class DataStore {
                         }
                 })
             } else {
-                reject(dbMessage.errnoconn);
+                this.connectDb();   // try to re-connect to the database
+                reject(dataLayerMessage.errnoconn);
             }
         });
     }
