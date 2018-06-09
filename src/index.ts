@@ -1,12 +1,15 @@
 
 // src/index.ts
-// TODO: Add express-validator functions to routes with input of any kind
+
 import * as express from 'express'
-import { Task } from './shared/Task';
-import { TaskList } from './shared/TaskList';
+import { Task, TaskSchema } from './shared/Task';
+import { TaskList, TaskListSchema } from './shared/TaskList';
 import {DataStore} from './db/datalayer';
 import { isIntString, isv4UUID} from './shared/util';
 import validator = require('express-validator');
+
+var { Validator, ValidationError } = require('express-json-validator-middleware');
+var jsonValidator = new Validator({allErrors: true});
 
 const app = express();
 var port = 401;
@@ -28,53 +31,43 @@ app.get('/', (request, response, next) => {
 
 
 app.get('/api/lists/', (request, response) => {
-    let skip: number;
-    let limit: number;
+    request.check("skip", "skip must be an integer > 0").optional().isInt({'min': 0});
+    request.check("limit", "limit must be an integer > 0").optional().isInt();
+    request.check("q", "query string (q) must be alphanumeric [a-z, 0-9]").optional().isAlphanumeric();
+
+    var errors = request.validationErrors();
+    if (errors) {
+        response.status(400);
+        response.send(errors);
+        return;
+    } 
+
+    let skip: number = (request.query.skip) ? Number(request.query.skip) : 0;
+    let limit: number = (request.query.limit) ? Number(request.query.limit) : 0;
     let queryString: string = request.query.q;
 
     let badInput = false;
     let errorMessage: string;
 
-    if(request.query.skip && isIntString.test(request.query.skip)) {
-        skip = Number(request.query.skip);
-    } else {
-        if(request.query.skip) {    // not an integer number
-            errorMessage = 'skip parameter must be a whole number';
-            badInput = true;
-        }
-    }
-
-    if(request.query.limit && isIntString.test(request.query.limit)) {
-        limit = Number(request.query.limit);
-    } else {
-        if(request.query.limit) {    // not an integer number
-            errorMessage = 'limit parameter must be a whole number';
-            badInput = true;
-        }
-    }
-
-    if(badInput) {
-        response.status(400);
-        response.send('Bad parameter(s): '+ errorMessage);
-    } else {
-        let ds: DataStore  = new DataStore();
-        ds.getTaskLists(queryString,skip,limit)
-            .then(tlists => {
-                response.status(200);
-                response.json(tlists);
-                response.send();
-            })
-            .catch(err => {
-                response.status(400);
-                response.json(err);
-                response.send();
-            });
-    }
+    let ds: DataStore  = new DataStore();
+    ds.getTaskLists(queryString,skip,limit)
+        .then(tlists => {
+            response.status(200);
+            response.json(tlists);
+            response.send();
+        })
+        .catch(err => {
+            response.status(400);
+            response.json(err);
+            response.send();
+        });
 });
 
+// app.post('/api/lists/', jsonValidator({body: TaskListSchema}), (request, response) => {
 app.post('/api/lists/', (request, response) => {
     let taskList: TaskList = request.body;
-    if((!taskList) || (!TaskList.validate(taskList))) {
+
+    if((!taskList) || (!TaskList.validateIDs(taskList))) {
         response.status(400);
         response.json('invalid JSON object');
         response.send;
@@ -94,12 +87,17 @@ app.post('/api/lists/', (request, response) => {
 });
 
 app.get('/api/list/:listId', (request, response) => {
-    let listId: string = request.param('listId');
-    if(!isv4UUID.test(listId)) {
-        response.json('id must be a valid uuid');
+    request.check("listId", "listId must be a valid v4 UUID").isUUID(4);
+
+    var errors = request.validationErrors();
+    if (errors) {
         response.status(400);
-        response.send();
-    }
+        response.send(errors);
+        return;
+    } 
+
+    let listId: string = request.param('listId');
+
     // let ds: DataStore = new DataStore();
     ds.getTaskListById(listId)
         .then(tlists => {
@@ -119,17 +117,21 @@ app.get('/api/list/:listId', (request, response) => {
         })
 });
 
-app.post('/api/list/:listId/tasks', (request, response) => {
-    let listId: string = request.param('listId');
-    if(!isv4UUID.test(listId)) {
-        response.json('id must be a valid uuid');
+app.post('/api/list/:listId/tasks', jsonValidator.validate({body: TaskSchema}),(request, response) => {
+    request.check("listId", "listId must be a valid v4 UUID").isUUID(4);
+
+    var errors = request.validationErrors();
+    if (errors) {
         response.status(400);
-        response.send();
-    }
+        response.send(errors);
+        return;
+    } 
+    
+    let listId: string = request.param('listId');
     let ds: DataStore = new DataStore();
 
     let task: Task = request.body;
-    if(!Task.validate(task)) {
+    if(!Task.validateID(task)) {
         response.json('invalid JSON object');
         response.status(400);
         response.send();
@@ -146,24 +148,21 @@ app.post('/api/list/:listId/tasks', (request, response) => {
         });
     }
 
-});
+})
 
 app.post('/api/list/:listId/task/:taskId/complete', (request, response) => {
-    let listId: string = request.param('listId');
-    if(!isv4UUID.test(listId)) {
-        response.json('list id must be a valid uuid ' + listId);
+    request.check("listId", "listId must be a valid v4 UUID").isUUID(4);
+    request.check("taskId", "taskId must be a valid v4 UUID").isUUID(4);
+    var errors = request.validationErrors();
+    if (errors) {
         response.status(400);
-        response.send();
+        response.send(errors);
         return;
-    }
+    } ;
 
+    let listId: string = request.param('listId');
     let taskId: string = request.param('taskId');
-    if(!isv4UUID.test(taskId)) {
-        response.json('task id must be a valid uuid: ' + taskId);
-        response.status(400);
-        response.send();
-        return;
-    }
+
     let ds: DataStore = new DataStore();
     ds.markTaskCompleted(listId, taskId)
         .then(() => {
@@ -176,6 +175,17 @@ app.post('/api/list/:listId/task/:taskId/complete', (request, response) => {
         response.json(message);
         response.send();
     });
+});
+
+// TODO: Figure out why the validation errors are not routing to the below function!?
+app.use(function(err, request, response, next) {
+    if (err instanceof ValidationError) {
+        response.status(400);
+        response.message('JSON Sent is not a valid task or tasklist object');
+        response.send();
+        next();
+    }
+    else next(err);
 });
 
 app.get('/api/createtasks/', (request, response) => {

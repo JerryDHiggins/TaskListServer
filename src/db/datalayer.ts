@@ -2,6 +2,7 @@ import { TaskList } from '../shared/TaskList';
 import { Task } from '../shared/Task';
 import { isIntString, isv4UUID } from '../shared/util';
 
+
 var UUID = require('uuid-js');
 
 let MONGO_LOCAL_URI: string = 'mongodb://localhost:27017/todolist';
@@ -30,16 +31,16 @@ export class DataStore {
                         isDbAttached = true;
                         resolve(dbMessage.conn);
                      }
+                } else {
+                    reject(dbMessage.errcantconn);
                 }
-               });
+            });
         });
     }
     
     getTaskLists(searchString: string, skip: number, limit: number): Promise<Array<TaskList>> {
         return new Promise<Array<TaskList>>((resolve, reject) => {
                 if ((isDbAttached) && (db.serverConfig.isConnected())) {
-                    if(!limit) { limit=20000000; }  // TODO: Magic, should do something better
-                    if(!skip) { skip=0; }
 
                     // Note that the createIndex will only create a new index if it does not already exist
                     db.collection('TaskLists').createIndex({
@@ -148,33 +149,33 @@ export class DataStore {
     markTaskCompleted(listId: string, taskId: string) : Promise<string> {
         let MongoClient = require('mongodb').MongoClient;
         return new Promise<string>((resolve, reject) => {
-                if (isDbAttached)  {
-                    this.getTaskListById(listId)
-                        .then( tlists => {
-                            let len: number = tlists.length;
-                            if(tlists.length === 0) {
-                                reject('List ' + listId + ' not found');
-                            } else {
-                                let isFound: boolean = false;
-                                let tasks: Array<Task> = tlists[0].tasks;
-                                for(let i: number = 0; i < tasks.length; i++) {
-                                    if(taskId === tasks[i].id) {
-                                        isFound= true;
-                                        tasks[i].completed=true;
-                                        db.collection('TaskLists')
-                                            .update({"id": listId}, 
-                                            {$set: {"tasks": tasks}});
-                                        resolve('success');
-                                    }
-                                }
-                                if (!isFound) {
-                                    reject('Task '+taskId+' not found in list ' + listId);
+            if ((isDbAttached) && (db.serverConfig.isConnected())) {
+                this.getTaskListById(listId)
+                    .then( tlists => {
+                        let len: number = tlists.length;
+                        if(tlists.length === 0) {
+                            reject('List ' + listId + ' not found');
+                        } else {
+                            let isFound: boolean = false;
+                            let tasks: Array<Task> = tlists[0].tasks;
+                            for(let i: number = 0; i < tasks.length; i++) {
+                                if(taskId === tasks[i].id) {
+                                    isFound= true;
+                                    tasks[i].completed=true;
+                                    db.collection('TaskLists')
+                                        .update({"id": listId}, 
+                                        {$set: {"tasks": tasks}});
+                                    resolve('success');
                                 }
                             }
-                    })
-                } else {
-                    reject(dbMessage.errnoconn);
-                }
+                            if (!isFound) {
+                                reject('Task '+taskId+' not found in list ' + listId);
+                            }
+                        }
+                })
+            } else {
+                reject(dbMessage.errnoconn);
+            }
         });
     }
 
