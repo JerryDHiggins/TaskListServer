@@ -56,9 +56,6 @@ export class DataStore {
                                     reject(err);
                                 }
                         })
-                        // .catch(err => {
-                        //     reject(err);
-                        // });
                     } else {
                         db.collection('TaskLists').find().limit(limit).skip(skip).toArray(function (err, result) {
                             if (!err) {
