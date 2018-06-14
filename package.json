@@ -11,18 +11,17 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/express-validator": "^3.0.0",
     "@types/joi": "^13.0.8",
     "@types/mongodb": "^3.0.19",
     "@types/node": "^10.3.0",
     "@types/uuid-js": "^0.7.1",
-    "express-json-validator-middleware": "^1.2.3",
-    "express-validator": "^5.2.0",
     "typescript": "^2.9.2",
-    "uuid-js": "^0.7.5"
   },
   "dependencies": {
     "express": "^4.16.3",
-    "mongodb": "^3.0.10"
+    "mongodb": "^3.0.10",
+    "express-json-validator-middleware": "^1.2.3",
+    "express-validator": "^5.2.0",
+    "uuid-js": "^0.7.5"
   }
 }
