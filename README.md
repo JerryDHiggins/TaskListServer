@@ -1,5 +1,5 @@
 # TaskListServer
-Simple tasklist http web service for managing simple task lists
+Simple tasklist http web service for managing task lists
 
 Requires node.js 8.11 or higher. Download and install here, if neccesary: <link>http://nodejs.org</link>
 
@@ -20,6 +20,15 @@ To install & run:
     
   Run a query:<br>
     <code>http://localhost:4001/lists</code>    -- note that you can change the listening port in index.ts<br>
+
+  About the code:
+    Task.ts       - definition of the Task class as well as JSON schema for validation
+    TaskList.ts   - definition of the TaskList class as well as JSON schema for validation
+    index.ts      - application logic and endpoint routes utilizing expressJS
+    datalayer.ts  - all database activity
+
+    Communication between the datalayer and application logic is via Observables
+
     
 API Endpoints:<br>
 GET:    API/lists -- return an array of task lists<br>
