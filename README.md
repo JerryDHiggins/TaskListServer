@@ -21,15 +21,27 @@ To install & run:
   Run a query:<br>
     <code>http://localhost:4001/lists</code>    -- note that you can change the listening port in index.ts<br>
 
-  About the code:
-    Task.ts       - definition of the Task class as well as JSON schema for validation
-    TaskList.ts   - definition of the TaskList class as well as JSON schema for validation
-    index.ts      - application logic and endpoint routes utilizing expressJS
-    datalayer.ts  - all database activity
+  About the code:<br>
+    Task.ts       - definition of the Task class as well as JSON schema for validation<br>
+    TaskList.ts   - definition of the TaskList class as well as JSON schema for validation<br>
+    index.ts      - application logic and endpoint routes utilizing expressJS<br>
+    datalayer.ts  - all database activity<br>
 
     Communication between the datalayer and application logic is via Observables
 
-    
+Testing Done:<br>
+  Manual testing using Google Arc<br>
+    1. All endpoints tested for correct functionality<br>
+    2. All endpoints tested for invalid input<br>
+    3. All GET endpoints tested for not found<br>
+    4. Invalid schema passed in body of POSTs to test correct status<br>
+    5. PUT functions tested with intentional duplicates
+    6. Database taken offline then restarted to test <br>
+
+TODO:
+  Automated unit tests using Karma.<br>
+  Automated end-to-end tests using Jasmine<br>
+
 API Endpoints:<br>
 GET:    API/lists -- return an array of task lists<br>
   parameters:<br>
