@@ -2,10 +2,11 @@
 // src/index.ts
 
 var express = require('express');
+var validator = require('express-validator');
 import { Task, TaskSchema } from './shared/Task';
 import { TaskList, TaskListSchema } from './shared/TaskList';
 import {DataStore, dataLayerMessage} from './db/datalayer';
-import validator = require('express-validator');
+
 
 var { Validator, ValidationError } = require('express-json-validator-middleware');
 var jsonValidator = new Validator({allErrors: true});
