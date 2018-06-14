@@ -55,11 +55,11 @@ app.get('/api/lists/', (request, response) => {
 
     ds.getTaskLists(queryString,skip,limit)
         .then(tlists => {
-            response.status(200).json(tlists).send();
+            response.status(200).json(tlists);
         })
         .catch(err => {
             let statuscode: number = mapMessageToCode(400, err);
-            response.status(statuscode).json(err).send();
+            response.status(statuscode).json(err);
         });
 });
 
@@ -88,7 +88,7 @@ app.get('/api/list/:listId', (request, response) => {
         return;
     } 
 
-    let listId: string = request.param('listId');
+    let listId: string = request.params['listId'];
 
     ds.getTaskListById(listId)
         .then(tlists => {
@@ -112,7 +112,7 @@ app.post('/api/list/:listId/tasks', jsonValidator.validate({body: TaskSchema}),(
         return;
     } 
     
-    let listId: string = request.param('listId');
+    let listId: string = request.params['listId'];
     let task: Task = request.body;
     if(!Task.validateID(task)) {
         response.json('invalid JSON object').status(400).send();
@@ -136,8 +136,8 @@ app.post('/api/list/:listId/task/:taskId/complete', (request, response) => {
         return;
     } ;
 
-    let listId: string = request.param('listId');
-    let taskId: string = request.param('taskId');
+    let listId: string = request.params['listId'];
+    let taskId: string = request.params['taskId'];
 
     ds.markTaskCompleted(listId, taskId)
         .then(() => {

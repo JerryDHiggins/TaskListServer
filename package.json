@@ -17,10 +17,13 @@
     "@types/uuid-js": "^0.7.1"
   },
   "dependencies": {
-
     "express-json-validator-middleware": "^1.2.3",
     "express-validator": "^5.2.0",
     "mongodb": "^3.0.10",
     "uuid-js": "^0.7.5"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "node ./dist/out-tsc/index"
   }
 }

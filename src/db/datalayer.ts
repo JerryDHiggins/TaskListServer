@@ -1,6 +1,6 @@
 import { TaskList } from '../shared/TaskList';
 import { Task } from '../shared/Task';
-import { isIntString, isv4UUID } from '../shared/util';
+import { isv4UUID } from '../shared/util';
 
 var UUID = require('uuid-js');
 
@@ -43,9 +43,11 @@ export class DataStore {
         return new Promise<Array<TaskList>>((resolve, reject) => {
                 if ((isDbAttached) && (db.serverConfig.isConnected())) {
 
-                    // Note that the createIndex will only create a new index if it does not already exist
+                    //Note that the createIndex will only create a new index if it does not already exist
                     db.collection('TaskLists').createIndex({
                         name: "text",
+                    }).catch(err => {
+                        console.log(err);
                     });
             
                     if (searchString) {
