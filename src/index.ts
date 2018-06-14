@@ -1,7 +1,7 @@
 
 // src/index.ts
 
-import * as express from 'express'
+var express = require('express');
 import { Task, TaskSchema } from './shared/Task';
 import { TaskList, TaskListSchema } from './shared/TaskList';
 import {DataStore, dataLayerMessage} from './db/datalayer';
