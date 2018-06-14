@@ -10,7 +10,7 @@ Uses: ExpressJS, NodeJS, Typescript, Mongodb
 ### Prepare database:
   1. Download and install mongodb `https://www.mongodb.com/`
   2. run `mongod.exe` from a command prompt
-  3. Create a database named 'todolist' with a collection 'TaskList'
+  3. Create a database named 'todolist' with a collection 'TaskList'. This can be done through Mongo Compass or programatically.
     
 ### Clone, Build an Run the Application
   1. clone repository and change to project directory
