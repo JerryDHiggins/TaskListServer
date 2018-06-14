@@ -8,9 +8,9 @@ Uses: ExpressJS, NodeJS, Typescript, Mongodb
 To install & run:
 
   Prepare database:<br>
-    >>1. Download and install mongodb <code>https://www.mongodb.com/</code><br>
-    >>2. run mongod from a command prompt<br>
-    >>3. Create a database named 'todolist' with a collection 'TaskList'<br>
+  >> 1. Download and install mongodb <code>https://www.mongodb.com/</code><br>
+  >> 2. run mongod from a command prompt<br>
+  >> 3. Create a database named 'todolist' with a collection 'TaskList'<br>
     
   Clone, Build an Run the Application<br>
     1. clone repository and change to project directory<br>
