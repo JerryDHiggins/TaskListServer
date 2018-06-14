@@ -62,7 +62,7 @@ Uses: ExpressJS, NodeJS, Typescript, Mongodb
 ### GET:    API/list/{id} -- return a single task list with requested id
 ###  body:
     JSON task list or empty
-  status:
+### status:
   code  |  Description
   ------|-----------------------------
   200   | success
