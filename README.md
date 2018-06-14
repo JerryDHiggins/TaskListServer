@@ -19,7 +19,7 @@ To install & run:
     4. start: <code>npm start</code><br>
     
   Run a query:<br>
-    <code>http://localhost:4001/lists</code>    -- note that you can change the listening port in index.ts<br>
+    <code>http://localhost:4001/api/lists</code>    -- note that you can change the listening port in index.ts<br>
 
   About the code:<br>
     Task.ts       - definition of the Task class as well as JSON schema for validation<br>
@@ -27,7 +27,7 @@ To install & run:
     index.ts      - application logic and endpoint routes utilizing expressJS<br>
     datalayer.ts  - all database activity<br>
 
-    Communication between the datalayer and application logic is via Observables
+Communication between the datalayer and application logic is via Observables
 
 Testing Done:<br>
   Manual testing using Google Arc<br>
