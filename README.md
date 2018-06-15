@@ -12,7 +12,7 @@ Uses: ExpressJS, NodeJS, Typescript, Mongodb
   2. run `mongod.exe` from a command prompt
   3. Create a database named 'todolist' with a collection 'TaskList'. This can be done through Mongo Compass or programatically.
     
-### Clone, Build an Run the Application
+### Clone, Build and Run the Application
   1. clone repository and change to project directory
   2. install dependencies `npm install` 
   3. build: `npm run build`
@@ -36,8 +36,7 @@ Uses: ExpressJS, NodeJS, Typescript, Mongodb
 - GET and PUT endpoints tested for not found as appropriate
 - Invalid schema passed in body of POSTs to test correct status
 - PUT functions tested with intentional duplicates
-- Database taken offline then restarted to test 
-- Database restart and auto reconnect
+- Database taken offline then restarted to test error functionality and reconnect logic
 
 ### TODO:
 - Automated unit tests using Karma

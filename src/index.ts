@@ -156,6 +156,12 @@ app.use(function(err, request, response, next) {
     else next(err);
 });
 
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
 app.get('/api/createtasks/', (request, response) => {
     const resp: string = ds.createTaskLists(40, 5);
     response.json(resp);
