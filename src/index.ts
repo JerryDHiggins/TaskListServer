@@ -36,6 +36,12 @@ function mapMessageToCode(defaultCode: number, message: any) : number {
 app.use(express.json());
 app.use(validator());
 
+app.options('/posts', function(req, res){
+    console.log("writing headers only");
+    res.header("Access-Control-Allow-Origin", "*");
+    res.end('');
+});
+
 app.get('/', (request, response, next) => {
     response.status(200).send('TaskList server is running');
 });
@@ -154,12 +160,6 @@ app.use(function(err, request, response, next) {
         response.status(400).send('JSON Sent is not a valid task or tasklist object');
     }
     else next(err);
-});
-
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
 });
 
 app.get('/api/createtasks/', (request, response) => {
