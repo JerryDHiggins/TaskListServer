@@ -1,0 +1,1 @@
+docker run -p 18000:1337 47ffb8ae6160

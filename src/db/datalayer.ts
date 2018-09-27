@@ -5,6 +5,7 @@ import { isv4UUID } from '../shared/util';
 var UUID = require('uuid-js');
 
 let MONGO_LOCAL_URI: string = 'mongodb://localhost:27017/todolist';
+let MONGO_REMOTE_URI: string = 'mongodb://todoApp:blah99@ds161099.mlab.com:61099/todolist';
 
 let dbname: string = 'todolist';
 let db;
@@ -18,7 +19,7 @@ export class dataLayerMessage {
 };
 
 export class DataStore {
-    dbConnectionStr: string = MONGO_LOCAL_URI;
+    dbConnectionStr: string = MONGO_REMOTE_URI;
    
     connectDb(): Promise<string> {
         let MongoClient = require('mongodb').MongoClient;
@@ -75,7 +76,6 @@ export class DataStore {
     }
 
     getTaskListById(taskListId: string): Promise<Array<TaskList>> {
-        let MongoClient = require('mongodb').MongoClient;
         let resultStr: string;
         
         return new Promise<Array<TaskList>>((resolve, reject) => {
@@ -95,8 +95,25 @@ export class DataStore {
             });
     }
 
+    deleteTaskListById(taskListId: string): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            let err=null;
+            if ((isDbAttached) && (db.serverConfig.isConnected())) {
+                db.collection('TaskLists').remove({id: taskListId}, (function (err, result) {
+                    if (!err) {
+                        resolve('deleted');
+                    } else {
+                        reject(err);
+                    }
+                }));
+            } else {
+                this.connectDb();   // try to re-connect to the database
+                reject(dataLayerMessage.errnoconn);
+            }
+        });
+    }
+
     createTaskList(taskList: TaskList) : Promise<string> {
-        let MongoClient = require('mongodb').MongoClient;
         let resultStr: string;
         
         return new Promise<string>((resolve, reject) => {
@@ -119,7 +136,6 @@ export class DataStore {
     }
 
     createTask(listId: string, task: Task) : Promise<string> {
-        let MongoClient = require('mongodb').MongoClient;
         let resultStr: string;
         
         return new Promise<string>((resolve, reject) => {
@@ -150,8 +166,8 @@ export class DataStore {
             }
         });
     }
-    markTaskCompleted(listId: string, taskId: string) : Promise<string> {
-        let MongoClient = require('mongodb').MongoClient;
+
+    markTaskCompleted(listId: string, taskId: string, isCompleted: boolean) : Promise<string> {
         return new Promise<string>((resolve, reject) => {
             if ((isDbAttached) && (db.serverConfig.isConnected())) {
                 this.getTaskListById(listId)
@@ -165,7 +181,7 @@ export class DataStore {
                             for(let i: number = 0; i < tasks.length; i++) {
                                 if(taskId === tasks[i].id) {
                                     isFound= true;
-                                    tasks[i].completed=true;
+                                    tasks[i].completed=isCompleted;
                                     db.collection('TaskLists')
                                         .update({"id": listId}, 
                                         {$set: {"tasks": tasks}});

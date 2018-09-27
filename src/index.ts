@@ -12,7 +12,7 @@ var { Validator, ValidationError } = require('express-json-validator-middleware'
 var jsonValidator = new Validator({allErrors: true});
 
 const app = express();
-var port = 4001;
+var port = process.env.PORT || 1337;
 let ds: DataStore = new DataStore();
 ds.connectDb().then(message => {
     console.log(message);
@@ -36,17 +36,17 @@ function mapMessageToCode(defaultCode: number, message: any) : number {
 app.use(express.json());
 app.use(validator());
 
-app.options('/posts', function(req, res){
-    console.log("writing headers only");
+app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
-    res.end('');
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
 });
 
 app.get('/', (request, response, next) => {
     response.status(200).send('TaskList server is running');
 });
 
-app.get('/api/lists/', (request, response) => {
+app.get('/api/lists/', (request, response, next) => {
     request.check("skip", "skip must be an integer > 0").optional().isInt({'min': 0});
     request.check("limit", "limit must be an integer > 0").optional().isInt({'min': 0});
     request.check("q", "query string (q) must be alphanumeric [a-z, 0-9]").optional().isAlphanumeric();
@@ -70,7 +70,7 @@ app.get('/api/lists/', (request, response) => {
         });
 });
 
-app.post('/api/lists/', jsonValidator.validate({body: TaskListSchema}), (request, response) => {
+app.post('/api/lists/', jsonValidator.validate({body: TaskListSchema}), (request, response, next) => {
     let taskList: TaskList = request.body;
 
     if((!taskList) || (!TaskList.validateIDs(taskList))) {
@@ -86,7 +86,43 @@ app.post('/api/lists/', jsonValidator.validate({body: TaskListSchema}), (request
     }
 });
 
-app.get('/api/list/:listId', (request, response) => {
+app.delete('/api/list/:listId', (request, response, next) => {
+    request.check("listId", "listId must be a valid v4 UUID").isUUID(4);
+
+    var errors = request.validationErrors();
+    if (errors) {
+        response.status(400).send(errors)
+        return;
+    } 
+
+    let listId: string = request.params['listId'];
+
+    ds.getTaskListById(listId)
+        .then(tlists => {
+            if(tlists.length == 0) {
+                response.status(404).json('item not found').send();
+                return;
+            } else {
+                ds.deleteTaskListById(listId)
+                .then(() => {
+                    response.json('deleted').status(201).send();
+                    return;
+                })
+                .catch(err => {
+                    let statuscode: number = mapMessageToCode(400, err);
+                    response.status(statuscode).json(err).send();
+                    return;
+                })
+            }
+        })
+        .catch(err => {
+            let statuscode: number = mapMessageToCode(400, err);
+            response.status(statuscode).json(err).send();
+        })
+});
+
+
+app.get('/api/list/:listId', (request, response, next) => {
     request.check("listId", "listId must be a valid v4 UUID").isUUID(4);
 
     var errors = request.validationErrors();
@@ -110,7 +146,7 @@ app.get('/api/list/:listId', (request, response) => {
         })
 });
 
-app.post('/api/list/:listId/tasks', jsonValidator.validate({body: TaskSchema}),(request, response) => {
+app.post('/api/list/:listId/tasks', jsonValidator.validate({body: TaskSchema}),(request, response, next) => {
     request.check("listId", "listId must be a valid v4 UUID").isUUID(4);
 
     var errors = request.validationErrors();
@@ -134,7 +170,7 @@ app.post('/api/list/:listId/tasks', jsonValidator.validate({body: TaskSchema}),(
     }
 })
 
-app.post('/api/list/:listId/task/:taskId/complete', (request, response) => {
+app.post('/api/list/:listId/task/:taskId/complete', (request, response, next) => {
     request.check("listId", "listId must be a valid v4 UUID").isUUID(4);
     request.check("taskId", "taskId must be a valid v4 UUID").isUUID(4);
     var errors = request.validationErrors();
@@ -146,7 +182,7 @@ app.post('/api/list/:listId/task/:taskId/complete', (request, response) => {
     let listId: string = request.params['listId'];
     let taskId: string = request.params['taskId'];
 
-    ds.markTaskCompleted(listId, taskId)
+    ds.markTaskCompleted(listId, taskId, true)
         .then(() => {
             response.status(201).json('task updated to complete').send();
     })
