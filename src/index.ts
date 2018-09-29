@@ -177,12 +177,34 @@ app.post('/api/list/:listId/task/:taskId/complete', (request, response, next) =>
     if (errors) {
         response.status(400).send(errors);
         return;
-    } ;
+    }
 
     let listId: string = request.params['listId'];
     let taskId: string = request.params['taskId'];
 
     ds.markTaskCompleted(listId, taskId, true)
+        .then(() => {
+            response.status(201).json('task updated to complete').send();
+    })
+    .catch(message => {
+        response.status(400).json(message).send();
+    });
+});
+
+app.post('/api/list/:listId/task/:taskId/incomplete', (request, response, next) => {
+    request.check("listId", "listId must be a valid v4 UUID").isUUID(4);
+    request.check("taskId", "taskId must be a valid v4 UUID").isUUID(4);
+    console.log("hello from incomplete");
+    var errors = request.validationErrors();
+    if (errors) {
+        response.status(400).send(errors);
+        return;
+    }
+
+    let listId: string = request.params['listId'];
+    let taskId: string = request.params['taskId'];
+
+    ds.markTaskCompleted(listId, taskId, false)
         .then(() => {
             response.status(201).json('task updated to complete').send();
     })
